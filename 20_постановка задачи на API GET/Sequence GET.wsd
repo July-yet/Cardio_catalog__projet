@@ -1,0 +1,44 @@
+@startuml
+Title Получение отфильтрованного списка комплексов
+actor Администратор as admin
+participant "UI онлайн-каталога:\nFrontend" as front
+participant "Backend Server" as back
+database "Cardio\nDatabase" as DB
+
+autonumber
+activate admin
+admin -> front:Выбрать критерии фильтрации и нажать\nкнопку "Применить"
+activate front
+front->front:Провести валидацию 
+alt Валидация не пройдена
+front-->admin:Информационное сообщение\nоб ошибке
+else Валидация пройдена
+activate back
+front->back:GET-запрос\n/complexes?params={query_params}
+alt Сервер не отвечает 30 секунд
+front --> admin : Информационное сообщение\n“ Сервер не отвечает.Повторите запрос”.
+else Ответ от сервера получен
+back->back:Провести валидацию
+alt Валидация не пройдена
+back-->front:Ответ на запрос\nс сообщением об ошибке (400)
+front-->admin:Информационное сообщение об ошибке
+else Валидация пройдена
+back->DB: SELECT-запрос к таблице\nCOMPLEXES на получение списка комлексов
+activate DB
+DB-->back:Вернуть результат
+deactivate DB
+back->back:Проверить полученные данные\nна наличие комплексов\nсоответствующих запросу
+alt Не найдено комплексов соответсвующих запросу
+back-->front:Ответ на запрос\nс сообщением об ошибке\n(404 (Not Found))
+front-->admin:Информационное сообщение\n“Поиск не дал результатов”
+else Найдены комплексы, соответствующие запросу
+back-->front:Ответ со списком комплексов
+deactivate back
+front-->admin:Отобразить список\nкомплексов соответствующих\nкритериям фильтрации
+deactivate front
+deactivate admin
+end
+end
+end
+end
+@enduml
